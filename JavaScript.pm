@@ -2,7 +2,7 @@ package Apache::AntiSpam::JavaScript;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 use Apache::Constants qw(:common);
 use Apache::File;
@@ -36,18 +36,18 @@ sub handler ($$) {
     local $/;           # slurp
     my $input = <$fh>;
 
-    $input =~ s|(<[aA]\b                      # <a
+    $input =~ s|(<a\b                         # <a
                  [^<>]*\b                     # any attributes
-                 [hH][rR][eE][fF]=\"?         # href=
-                   [mM][aA][iI][lL][tT][oO]:  # mailto:
+                 href=\"?                     # href=
+                   mailto:                    # mailto:
                    ([^\"\s<>]+)               # EMAIL
                  \"?                          # href closed
                  [^<>]*                       # any attributes
                >                              # anchor closed
                  (.+?)                        # TEXT
-               </[aA]>)                       # </a>
+               </a>)                          # </a>
 
-              |$class->antispamize($1, $2, $3)|sgex;
+              |$class->antispamize($1, $2, $3)|sgexi;
 
     $r->print($input);
 
@@ -67,7 +67,7 @@ sub antispamize {
     $repl =~ s/>/'+JSgt+'/g;
 
     ## removed language=\"JavaScript\" for XHTML
-    $orig = "<script type=\"text/javascript\">JSlt='<';JSgt='>';document.write('" .
+    $orig = "<script type=\"text/javascript\">JSlt=unescape('%3C');JSgt=unescape('%3E');document.write('" .
             $repl . "');</script>";
 
     ## may be you want to add this
@@ -109,8 +109,8 @@ to JavaScript code.
 
    # in browser
    <script type="text/javascript">
-     JSlt='<';
-     JSgt='>';
+     JSlt=unescape('%3C'); // "<"
+     JSgt=unescape('%3E'); // ">"
      document.write(''+JSlt+'a h'+'ref='+'"mai'+'lto:'+'alex'+'@zei'+'tfor'+
                     'm.de'+'"'+JSgt+'al'+'ex@z'+'eitf'+'orm.'+'de'+JSlt+'/'+
                     'a'+JSgt+'');

@@ -28,8 +28,8 @@ Example output:
 
    # in browser
    <script type="text/javascript">
-     JSlt='<';
-     JSgt='>';
+     JSlt=unescape('%3C'); // "<"
+     JSgt=unescape('%3E'); // ">"
      document.write(''+JSlt+'a h'+'ref='+'"mai'+'lto:'+'alex'+'@zei'+'tfor'+
                     'm.de'+'"'+JSgt+'al'+'ex@z'+'eitf'+'orm.'+'de'+JSlt+'/'+
                     'a'+JSgt+'');
