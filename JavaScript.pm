@@ -2,7 +2,7 @@ package Apache::AntiSpam::JavaScript;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 use Apache::Constants qw(:common);
 use Apache::File;
@@ -31,31 +31,10 @@ sub handler ($$) {
 
     return DECLINED unless $fh;
 
-    # finds and replaces e-mail addresses
-    # if-statement should be outside the sub for efficiency
-    my $replacer;
-    if (uc($r->dir_config('AntiSpamFormat')) eq 'SPACES') {
-        $replacer = sub {
-            my($email, $orig) = @_;
-            $orig =~ s/\@/ at /g;
-            $orig =~ s/\./ dot /g;
-            $orig =~ s/\-/ bar /g;
-            $orig =~ s/  */ /g;
-            return $orig;
-        };
-    } else {
-        $replacer = sub {
-            my($email, $orig) = @_;
-            $orig =~ s/\@/-nospam\@/;
-            return $orig;
-        };
-    }
-
     $r->send_http_header;
 
     local $/;           # slurp
     my $input = <$fh>;
-    #find_emails($input, sub { $class->antispamize(@_) });
 
     $input =~ s|(<[aA]\b                      # <a
                  [^<>]*\b                     # any attributes
@@ -82,8 +61,14 @@ sub antispamize {
     #$email =~ s/@/{at}/g;
     #$text =~ s/@/{at}/g;
 
-    my $orig = "<script language=\"JavaScript\">document.write('" .
-            join("'+'", $orig =~ /(.{1,4})/g) . "');</script>";
+    ## required for validator
+    my $repl = join("'+'", $orig =~ /(.{1,4})/g);
+    $repl =~ s/</'+JSlt+'/g;
+    $repl =~ s/>/'+JSgt+'/g;
+
+    ## removed language=\"JavaScript\" for XHTML
+    $orig = "<script type=\"text/javascript\">JSlt='<';JSgt='>';document.write('" .
+            $repl . "');</script>";
 
     ## may be you want to add this
     #$orig .= "<noscript>$text ($email)</noscript>";
@@ -123,9 +108,12 @@ to JavaScript code.
    <a href="mailto:alex@zeitform.de">alex@zeitform.de</a>
 
    # in browser
-   <script language="JavaScript">
-     document.write('<a h'+'ref='+'"mai'+'lto:'+'alex'+'@zei'+'tfor'+
-                    'm.de'+'">al'+'ex@z'+'eitf'+'orm.'+'de</'+'a>');
+   <script type="text/javascript">
+     JSlt='<';
+     JSgt='>';
+     document.write(''+JSlt+'a h'+'ref='+'"mai'+'lto:'+'alex'+'@zei'+'tfor'+
+                    'm.de'+'"'+JSgt+'al'+'ex@z'+'eitf'+'orm.'+'de'+JSlt+'/'+
+                    'a'+JSgt+'');
    </script>
 
 This module is Filter aware, meaning that it can work within
@@ -142,7 +130,7 @@ Alex Pleiner, E<lt>alex@zeitform.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2003 by Alex Pleiner
+Copyright 2003, 2004 by Alex Pleiner
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

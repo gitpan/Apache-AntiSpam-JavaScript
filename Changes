@@ -1,5 +1,9 @@
 Revision history for Perl extension Apache::AntiSpam::JavaScript.
 
+0.02  Fre Apr 30 18:22:37 CEST 2004
+       - code cleanup
+       - expanded JavaScript code to have this validate against http://validator.w3.org/
+
 0.01  Fri Oct 24 13:25:48 CEST 2003
 	- original version; created by h2xs 1.20 with options
 		-AXc -n Apache::AntiSpam::JavaScript
